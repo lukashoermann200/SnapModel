@@ -210,10 +210,10 @@ def getEnergyDissipationFromFilesTA(output,
                 temperature = temperature[:-1]
             temperature = np.float64(temperature)
             
-            if not tors == tors_filter \
-            or not angle == angle_filter \
-            or not amp == amp_filter \
-            or not temperature == temperature_filter:
+            if not np.float64(tors) == np.float64(tors_filter) \
+            or not np.float64(angle) == np.float64(angle_filter) \
+            or not np.float64(amp) == np.float64(amp_filter) \
+            or not np.float64(temperature) == np.float64(temperature_filter):
                 continue
             
             data = np.load(file)
