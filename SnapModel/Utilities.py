@@ -367,6 +367,30 @@ def readEnergyDissipationFile(file_name, z_ind='max'):
     return PES_method, amp, tors, offset, angle, theta, phi, force, U, U_PES
 
 
+def getParametersFromFile(file_name):
+    
+    s = '(?<='+re.escape('amp')+')'
+    amp = re.findall(s+'[0-9\.\-]*', os.path.basename(file_name))[0]
+    amp = np.float64(amp)
+    
+    s = '(?<='+re.escape('tors')+')'
+    tors = re.findall(s+'[0-9\.\-]*', os.path.basename(file_name))[0]
+    tors = np.float64(tors)
+    
+    s = '(?<='+re.escape('offset')+')'
+    offset = re.findall(s+'[0-9\.\-]*', os.path.basename(file_name))[0]
+    offset = np.float64(offset)
+    
+    s = '(?<='+re.escape('angle')+')'
+    angle = re.findall(s+'[0-9\.\-]*', os.path.basename(file_name))[0]
+    if angle[-1] == '.':
+        angle = angle[:-1]
+    angle = np.float64(angle)
+    
+    return amp, tors, offset, angle
+    
+
+
 def read(filename):
     energy_dissipation = []
     
