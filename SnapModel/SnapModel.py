@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import copy
 import aimstools.Units as Units
+from BADASS.PESUtils import kernelMatrix, getBarrierHeight
 
 
 J_per_eV = 1.6022e-19
@@ -9,8 +10,6 @@ J_per_eV = 1.6022e-19
 
 class GPR:
     def __init__(self, x, y, tau, sigma):
-        from BADASS.PESUtils import kernelMatrix
-
         K1 = kernelMatrix(x, x, tau)
 
         self.K1_inv = np.linalg.inv(K1 + np.eye(len(x)) * sigma)
@@ -29,8 +28,6 @@ class GPR:
         print(np.sqrt(y_diff.dot(y_diff)) / len(y), np.std(y), flush=True)
 
     def getEnergy(self, x):
-        from BADASS.PESUtils import kernelMatrix
-
         K2 = kernelMatrix(x, self.x, self.tau)
         y_test0 = K2.dot(self.K1_inv)
 
