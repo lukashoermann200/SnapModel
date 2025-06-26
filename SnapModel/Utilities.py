@@ -227,7 +227,7 @@ def saveDataAsImage(
     L = dissipation < 0.0
     dissipation[L] = 0.0
 
-    plt.barh(y_list, dissipation * 1000, align="center", height=0.02)
+    plt.barh(y_list, dissipation * 1000, align="center", height=0.01)
     plt.xlim((0, 25))
     plt.ylim((StartZ - padding, StopZ + padding))
 
