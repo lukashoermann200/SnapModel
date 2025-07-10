@@ -345,14 +345,14 @@ def getLJParams(species):
 class EnergyModelLJ:
     def __init__(self, geom):
 
-        if geom.isPeriodic():
-            self.geom = geom.getPeriodicReplica(
+        if geom.get_is_periodic():
+            self.geom = geom.get_periodic_replica(
                 (1, 1, 1), explicit_replications=([-1, 0, 1], [-1, 0, 1], [0])
             )
         else:
             self.geom = geom
 
-        self.geom.removeMetalSubstrate()
+        self.geom.remove_metal_atoms()
 
         print(len(self.geom), flush=True)
 
@@ -453,14 +453,14 @@ class EnergyModelPLJ(EnergyModelML):
 
         self.x_train, self.y_train = self.getInterpolatedEnergy2D()
 
-        if geom.isPeriodic():
-            self.geom = geom.getPeriodicReplica(
+        if geom.get_is_periodic():
+            self.geom = geom.get_periodic_replica(
                 (1, 1, 1), explicit_replications=([-1, 0, 1], [-1, 0, 1], [0])
             )
         else:
             self.geom = geom
 
-        self.geom.removeMetalSubstrate()
+        self.geom.remove_metal_atoms()
 
         print(len(self.geom), flush=True)
 
