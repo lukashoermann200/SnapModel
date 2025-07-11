@@ -1,60 +1,33 @@
 [tool.poetry]
-name = "mltools"
+name = "snapmodel"
 version = "0.1.0"
-description = "A wrapper around mace that does some useful stuff."
-authors = [
-    "Lukas Hoermann <lukas.hoermann@warwick.ac.uk>",
-]
+description = "A probe particle model that allows simulating LFM experiments."
+authors = ["Lukas Hoermann <lukas.hoermann@warwick.ac.uk>"]
 license = "GPL-3.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-numpy = "^1.26.4"
-
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.3.5"
-pyright = "^1.1.373"
-pytest = "^8.2.0"
-ptpython = "^3.0.26"
-
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "^7.4.7"
-furo = "^2024.7.18"
-# sphinx-rtd-theme = "^2.0.0"
-# piccolo-theme = "^0.23.0"
-sphinx-pyproject = "^0.3.0"
-myst-parser = "^3.0.1"
+python = ">=3.8"
+numpy = "*"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.sphinx-pyproject]
-project = "mltools"
+project = "snapmodel"
 author = "Lukas Hoermann"
 copyright = "2024, Lukas Hoermann"
 html_theme = "furo"
-# html_theme = "sphinx_rtd_theme"
-# html_theme = "piccolo_theme"
 extensions = [
   "sphinx.ext.autodoc",
   "sphinx.ext.viewcode",
   "sphinx.ext.napoleon",
   "myst_parser",
 ]
-templates_path = ["_templates",]
-html_static_path = ["_static",]
-exclude_patterns = [
-  "build", 
-  ".DS_Store",
-]
+templates_path = ["_templates"]
+html_static_path = ["_static"]
+exclude_patterns = ["build", ".DS_Store"]
 
 [tool.ruff]
 line-length = 88
@@ -62,16 +35,16 @@ indent-width = 4
 target-version = "py310"
 
 [tool.ruff.lint]
-# select = ['']
-ignore = ["E741", ]
+ignore = ["E741"]
 
 [tool.pyright]
-include = ["dfttools"]
+include = ["snapmodel"]
 exclude = ["**/__pycache__"]
 
 [tool.pytest.ini_options]
-pythonpath = "dfttools"
-testpaths = ["tests"]
-addopts = [
-    "--import-mode=importlib",
-]
+pythonpath = "snapmodel"
+# testpaths = ["tests"]
+# addopts = [
+#     "--import-mode=importlib",
+# ]
+
