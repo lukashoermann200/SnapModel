@@ -648,6 +648,90 @@ class SnapModel:
 
         # plotGeometry(self.energy_model.geom, osc_center, osc_dir)
 
+    def run(self, f0, NSteps_0, apex_height, th, phi):
+        self.Th_init = copy.deepcopy(th)
+        self.Phi_init = copy.deepcopy(phi)
+        ThNow = th
+        PhiNow = phi
+        T = 1 / f0
+        dt = T / NSteps_0
+
+        NSteps = self.n_cycles * NSteps_0
+
+        self.UVec = np.zeros([NSteps])
+        self.UPESVec = np.zeros([NSteps])
+        self.FVec = np.zeros([NSteps])
+        self.ThVec = np.zeros([NSteps])
+        self.PhVec = np.zeros([NSteps])
+        delta_U_vec = np.zeros([NSteps])
+
+        if self.themal_activation:
+            min_apex_phase, max_apex_phase = self.getMaxApexPhase()
+            self.min_apex_phase = min_apex_phase
+            self.max_apex_phase = max_apex_phase
+
+        # First oscillation for a weird snap
+        for i in range(self.init_steps):
+            for cnt in range(NSteps):
+                t_now = cnt * dt
+
+                apex_pos = self.getApexPos(t_now, T, apex_height)
+                U, ThNow, PhiNow = self.AdvTip(apex_pos, ThNow, PhiNow)
+                U, ThNow, PhiNow, delta_U = self.forceSnap(
+                    t_now, T, apex_height, U, ThNow, PhiNow
+                )
+
+        # Then keep oscillating
+        for cnt in range(NSteps):
+            t_now = cnt * dt
+
+            apex_pos = self.getApexPos(t_now, T, apex_height)
+            U, ThNow, PhiNow = self.AdvTip(apex_pos, ThNow, PhiNow)
+            U, ThNow, PhiNow, delta_U = self.forceSnap(
+                t_now, T, apex_height, U, ThNow, PhiNow
+            )
+
+            self.UVec[cnt] = U
+            self.ThVec[cnt] = ThNow
+            self.PhVec[cnt] = PhiNow
+            delta_U_vec[cnt] = delta_U
+
+            # Where am I (to get force)
+            CO_pos = self.getCOPos(apex_pos, ThNow, PhiNow)
+
+            # Calculate the total force and energy on the tip at this position
+            force_PES = self.energy_model.getForce(CO_pos)
+            UH_PES = self.energy_model.getEnergy(CO_pos)
+
+            self.UPESVec[cnt] = UH_PES
+            self.FVec[cnt] = self.osc_dir.dot(force_PES)
+
+        dfint = 0
+        Edissint = 0
+
+        # That's that! With the forces at each position of the oscillation, we can output the Df and Ediss signals.
+        # The calculation for Df was described by Giessibl Appl Phys Lett 78, 123 (2001) - See Eq. 2
+        # One description for Ediss can be found in Ondracek et al. Nanotechnology 27, 274005 (2016) - Appendix B
+        for cnt in range(NSteps):
+            dfint = dfint - self.FVec[cnt] * np.sin(2 * np.pi * f0 * cnt * dt)
+            Edissint = Edissint - self.FVec[cnt] * np.cos(
+                2 * np.pi * f0 * cnt * dt
+            )
+
+        df = -(f0**2 / self.k / self.asc_amp) * dfint * dt
+        E_diss = (2 * np.pi * self.asc_amp * f0) * Edissint * dt
+
+        if self.themal_activation:
+            E_diss = self.correctEnergyBySnappingProbability(
+                E_diss, delta_U_vec
+            )
+
+        # divide by number of cycles to get dissipation per cycle
+        df /= self.n_cycles
+        E_diss /= self.n_cycles
+
+        return df, E_diss
+
     def getApexPhase(self, t_now, T):
         apex_phase = np.sin(2 * np.pi * t_now / T)
         return apex_phase
@@ -806,90 +890,6 @@ class SnapModel:
         CO_pos = np.array([CO_pos_x, CO_pos_y, CO_pos_z])
 
         return CO_pos
-
-    def runOscillation(self, f0, NSteps_0, apex_height, th, phi):
-        self.Th_init = copy.deepcopy(th)
-        self.Phi_init = copy.deepcopy(phi)
-        ThNow = th
-        PhiNow = phi
-        T = 1 / f0
-        dt = T / NSteps_0
-
-        NSteps = self.n_cycles * NSteps_0
-
-        self.UVec = np.zeros([NSteps])
-        self.UPESVec = np.zeros([NSteps])
-        self.FVec = np.zeros([NSteps])
-        self.ThVec = np.zeros([NSteps])
-        self.PhVec = np.zeros([NSteps])
-        delta_U_vec = np.zeros([NSteps])
-
-        if self.themal_activation:
-            min_apex_phase, max_apex_phase = self.getMaxApexPhase()
-            self.min_apex_phase = min_apex_phase
-            self.max_apex_phase = max_apex_phase
-
-        # First oscillation for a weird snap
-        for i in range(self.init_steps):
-            for cnt in range(NSteps):
-                t_now = cnt * dt
-
-                apex_pos = self.getApexPos(t_now, T, apex_height)
-                U, ThNow, PhiNow = self.AdvTip(apex_pos, ThNow, PhiNow)
-                U, ThNow, PhiNow, delta_U = self.forceSnap(
-                    t_now, T, apex_height, U, ThNow, PhiNow
-                )
-
-        # Then keep oscillating
-        for cnt in range(NSteps):
-            t_now = cnt * dt
-
-            apex_pos = self.getApexPos(t_now, T, apex_height)
-            U, ThNow, PhiNow = self.AdvTip(apex_pos, ThNow, PhiNow)
-            U, ThNow, PhiNow, delta_U = self.forceSnap(
-                t_now, T, apex_height, U, ThNow, PhiNow
-            )
-
-            self.UVec[cnt] = U
-            self.ThVec[cnt] = ThNow
-            self.PhVec[cnt] = PhiNow
-            delta_U_vec[cnt] = delta_U
-
-            # Where am I (to get force)
-            CO_pos = self.getCOPos(apex_pos, ThNow, PhiNow)
-
-            # Calculate the total force and energy on the tip at this position
-            force_PES = self.energy_model.getForce(CO_pos)
-            UH_PES = self.energy_model.getEnergy(CO_pos)
-
-            self.UPESVec[cnt] = UH_PES
-            self.FVec[cnt] = self.osc_dir.dot(force_PES)
-
-        dfint = 0
-        Edissint = 0
-
-        # That's that! With the forces at each position of the oscillation, we can output the Df and Ediss signals.
-        # The calculation for Df was described by Giessibl Appl Phys Lett 78, 123 (2001) - See Eq. 2
-        # One description for Ediss can be found in Ondracek et al. Nanotechnology 27, 274005 (2016) - Appendix B
-        for cnt in range(NSteps):
-            dfint = dfint - self.FVec[cnt] * np.sin(2 * np.pi * f0 * cnt * dt)
-            Edissint = Edissint - self.FVec[cnt] * np.cos(
-                2 * np.pi * f0 * cnt * dt
-            )
-
-        df = -(f0**2 / self.k / self.asc_amp) * dfint * dt
-        E_diss = (2 * np.pi * self.asc_amp * f0) * Edissint * dt
-
-        if self.themal_activation:
-            E_diss = self.correctEnergyBySnappingProbability(
-                E_diss, delta_U_vec
-            )
-
-        # divide by number of cycles to get dissipation per cycle
-        df /= self.n_cycles
-        E_diss /= self.n_cycles
-
-        return df, E_diss
 
     def correctEnergyBySnappingProbability(self, E_diss, delta_U_vec):
         p = np.exp(
@@ -1085,15 +1085,6 @@ def plotGeometry(geom, osc_center, osc_dir):
 
     fig.savefig("Geometry.png", dpi=800)
     plt.close()
-
-
-def getInitialValuesForPhiAndTheta(osc_dir_0, osc_dir):
-    th = 0.0
-    phi = np.arccos(osc_dir[0])
-    sign = np.sign(np.cross(osc_dir, osc_dir_0)[2])
-    phi *= sign
-
-    return th, phi
 
 
 if __name__ == "__main__":  # main( int argc, char *argv[] )

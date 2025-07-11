@@ -1,15 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jun 19 10:43:22 2023
-
-@author: lukas
-"""
 import os
 import glob
 import re
 import numpy as np
-from SnapModel.SnapModel import getInitialValuesForPhiAndTheta
 
 
 def runSnapModel(
@@ -28,7 +20,9 @@ def runSnapModel(
 
     for apex_height in apex_height_list:
         th, phi = getInitialValuesForPhiAndTheta(osc_dir_0, osc_dir)
-        df, Ediss = snap_model.runOscillation(f0, NSteps, apex_height, th, phi)
+        df, Ediss = snap_model.run_oscillation(
+            f0, NSteps, apex_height, th, phi
+        )
 
         print(apex_height, df, Ediss, flush=True)
 
@@ -60,6 +54,15 @@ def runSnapModel(
     )
 
     return output_array
+
+
+def getInitialValuesForPhiAndTheta(osc_dir_0, osc_dir):
+    th = 0.0
+    phi = np.arccos(osc_dir[0])
+    sign = np.sign(np.cross(osc_dir, osc_dir_0)[2])
+    phi *= sign
+
+    return th, phi
 
 
 def saveData(
