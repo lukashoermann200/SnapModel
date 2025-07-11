@@ -52,7 +52,40 @@ class GPR:
         return float(y_test0.dot(self.y))
 
 
-class EnergyModelML:
+class EnergyModelBase:
+    def __add__(self, other):
+        return EnergyModelCombined(self, other, 1.0, 1.0)
+
+    def __sub__(self, other):
+        return EnergyModelCombined(self, other, 1.0, -1.0)
+
+    __radd__ = __add__  # a+b and b+a behave the same
+
+    def __rsub__(self, other):
+        return EnergyModelCombined(self, other, -1.0, 1.0)
+
+
+class EnergyModelCombined(EnergyModelBase):
+    def __init__(self, model_1, model_2, weight_1: float, weight_2: float):
+        self.models = [model_1, model_2]
+        self.weights = [weight_1, weight_2]
+
+    def getEnergy(self, pos):
+        energy = 0
+        for model, weight in zip(self.models, self.weights):
+            energy += weight * model.getEnergy(pos)
+
+        return energy
+
+    def getForce(self, pos):
+        force = np.zeros(3)
+        for model, weight in zip(self.models, self.weights):
+            force += weight * model.getForce(pos)
+
+        return force
+
+
+class EnergyModelML(EnergyModelBase):
     def __init__(
         self,
         run,
@@ -342,7 +375,7 @@ def getLJParams(species):
     return LJ_eps, LJ_r
 
 
-class EnergyModelLJ:
+class EnergyModelLJ(EnergyModelBase):
     def __init__(self, geom):
 
         if geom.get_is_periodic():
