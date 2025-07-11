@@ -20,9 +20,7 @@ def runSnapModel(
 
     for apex_height in apex_height_list:
         th, phi = getInitialValuesForPhiAndTheta(osc_dir_0, osc_dir)
-        df, Ediss = snap_model.run_oscillation(
-            f0, NSteps, apex_height, th, phi
-        )
+        df, Ediss = snap_model.run(f0, NSteps, apex_height, th, phi)
 
         print(apex_height, df, Ediss, flush=True)
 

@@ -3,7 +3,6 @@ import scipy
 import copy
 import dfttoolkit.utils.units as units
 from dfttoolkit.utils.periodic_table import PeriodicTable
-from aimstools import Utilities as ut
 from snapmodel.utilities import debug_plots
 
 J_per_eV = 1.6022e-19
