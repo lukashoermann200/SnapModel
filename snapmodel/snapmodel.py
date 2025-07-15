@@ -74,7 +74,7 @@ class SnapModel:
         delta_U_vec = np.zeros([NSteps])
 
         if self.themal_activation:
-            min_apex_phase, max_apex_phase = self.getMaxApexPhase()
+            min_apex_phase, max_apex_phase = self.get_max_apex_phase()
             self.min_apex_phase = min_apex_phase
             self.max_apex_phase = max_apex_phase
 
@@ -83,9 +83,9 @@ class SnapModel:
             for cnt in range(NSteps):
                 t_now = cnt * dt
 
-                apex_pos = self.getApexPos(t_now, T, apex_height)
-                U, ThNow, PhiNow = self.AdvTip(apex_pos, ThNow, PhiNow)
-                U, ThNow, PhiNow, delta_U = self.forceSnap(
+                apex_pos = self.get_apex_pos(t_now, T, apex_height)
+                U, ThNow, PhiNow = self.advance_tip(apex_pos, ThNow, PhiNow)
+                U, ThNow, PhiNow, delta_U = self.force_snap(
                     t_now, T, apex_height, U, ThNow, PhiNow
                 )
 
@@ -93,9 +93,9 @@ class SnapModel:
         for cnt in range(NSteps):
             t_now = cnt * dt
 
-            apex_pos = self.getApexPos(t_now, T, apex_height)
-            U, ThNow, PhiNow = self.AdvTip(apex_pos, ThNow, PhiNow)
-            U, ThNow, PhiNow, delta_U = self.forceSnap(
+            apex_pos = self.get_apex_pos(t_now, T, apex_height)
+            U, ThNow, PhiNow = self.advance_tip(apex_pos, ThNow, PhiNow)
+            U, ThNow, PhiNow, delta_U = self.force_snap(
                 t_now, T, apex_height, U, ThNow, PhiNow
             )
 
@@ -105,7 +105,7 @@ class SnapModel:
             delta_U_vec[cnt] = delta_U
 
             # Where am I (to get force)
-            CO_pos = self.getCOPos(apex_pos, ThNow, PhiNow)
+            CO_pos = self.get_co_pos(apex_pos, ThNow, PhiNow)
 
             # Calculate the total force and energy on the tip at this position
             force_PES = self.energy_model.getForce(CO_pos)
@@ -130,7 +130,7 @@ class SnapModel:
         E_diss = (2 * np.pi * self.asc_amp * f0) * Edissint * dt
 
         if self.themal_activation:
-            E_diss = self.correctEnergyBySnappingProbability(
+            E_diss = self.correct_energy_by_snapping_probability(
                 E_diss, delta_U_vec
             )
 
@@ -140,11 +140,11 @@ class SnapModel:
 
         return df, E_diss
 
-    def getApexPhase(self, t_now, T):
+    def get_apex_phase(self, t_now, T):
         apex_phase = np.sin(2 * np.pi * t_now / T)
         return apex_phase
 
-    def getMaxApexPhase(self):
+    def get_max_apex_phase(self):
 
         NSteps = len(self.UVec)
 
@@ -162,9 +162,9 @@ class SnapModel:
 
         return min_apex_phase, max_apex_phase
 
-    def getApexPos(self, t_now, T, apex_height):
+    def get_apex_pos(self, t_now, T, apex_height):
 
-        apex_phase = self.getApexPhase(t_now, T)
+        apex_phase = self.get_apex_phase(t_now, T)
         apex_vec = self.osc_dir * self.asc_amp * apex_phase
         apex_pos = (
             self.osc_center + np.array([0.0, 0.0, apex_height]) + apex_vec
@@ -172,7 +172,7 @@ class SnapModel:
 
         return apex_pos
 
-    def forceSnap(self, t_now, T, apex_height, U, theta_0, phi_0):
+    def force_snap(self, t_now, T, apex_height, U, theta_0, phi_0):
         """
         Functionality
         -------------
@@ -210,10 +210,10 @@ class SnapModel:
 
         if self.themal_activation:
 
-            apex_phase = self.getApexPhase(t_now, T)
+            apex_phase = self.get_apex_phase(t_now, T)
 
-            apex_pos = self.getApexPos(t_now, T, apex_height)
-            CO_pos = self.getCOPos(apex_pos, theta_0, phi_0)
+            apex_pos = self.get_apex_pos(t_now, T, apex_height)
+            CO_pos = self.get_co_pos(apex_pos, theta_0, phi_0)
             CO_vec = CO_pos - apex_pos
             CO_side = np.sign(np.dot(CO_vec, self.osc_dir))
 
@@ -225,15 +225,15 @@ class SnapModel:
             ):
                 theta = -np.pi * 0.1 * CO_side
                 phi = self.Phi_init
-                U, theta, phi = self.AdvTip(apex_pos, theta, phi)
+                U, theta, phi = self.advance_tip(apex_pos, theta, phi)
 
-                delta_U = self.calculateBarrier(
+                delta_U = self.calculate_barrier(
                     apex_pos, theta_0, phi_0, theta, phi
                 )
 
         return U, theta, phi, delta_U
 
-    def calculateBarrier(self, apex_pos, theta_0, phi_0, theta_1, phi_1):
+    def calculate_barrier(self, apex_pos, theta_0, phi_0, theta_1, phi_1):
         """
         Parameters
         ----------
@@ -267,7 +267,7 @@ class SnapModel:
 
         for ind_0, theta in enumerate(theta_list):
             for ind_1, phi in enumerate(phi_list):
-                U_array[ind_0, ind_1] = self.getEnergyOfTip(
+                U_array[ind_0, ind_1] = self.get_energy_of_tip(
                     apex_pos, theta, phi
                 )
 
@@ -288,7 +288,7 @@ class SnapModel:
 
         return delta_U
 
-    def getCOPos(self, apex_pos, theta, phi):
+    def get_co_pos(self, apex_pos, theta, phi):
         # calculate the project of the molecule vector in the xy-plane
         CO_length_xy = self.CO_length * np.sin(theta)
 
@@ -299,7 +299,7 @@ class SnapModel:
 
         return CO_pos
 
-    def correctEnergyBySnappingProbability(self, E_diss, delta_U_vec):
+    def correct_energy_by_snapping_probability(self, E_diss, delta_U_vec):
         p = np.exp(
             -np.max(delta_U_vec)
             / (units.BOLTZMANN_CONSTANT / units.EV_IN_JOULE)
@@ -311,13 +311,13 @@ class SnapModel:
         E_diss *= p
         return E_diss
 
-    def AdvTip(self, apex_pos, ThNow, PhiNow):
+    def advance_tip(self, apex_pos, ThNow, PhiNow):
         if self.dims == 1:
-            return self.AdvTip1D(apex_pos, ThNow, PhiNow)
+            return self.advance_tip_1d(apex_pos, ThNow, PhiNow)
         else:
-            return self.AdvTip2D(apex_pos, ThNow, PhiNow)
+            return self.advance_tip_2d(apex_pos, ThNow, PhiNow)
 
-    def AdvTip1D(self, apex_pos, ThNow, PhiNow):
+    def advance_tip_1d(self, apex_pos, ThNow, PhiNow):
         """
         Functionality
         -------------
@@ -338,7 +338,7 @@ class SnapModel:
             """
             theta = x[0]
 
-            return self.getEnergyOfTip(apex_pos, theta, PhiNow)
+            return self.get_energy_of_tip(apex_pos, theta, PhiNow)
 
         x0 = np.array([ThNow])
         limits = [(ThNow - 2.0, ThNow + 2.0)]
@@ -353,7 +353,7 @@ class SnapModel:
         # And the energy at this position (why not :-) )
         return func(res.x), res.x[0], PhiNow
 
-    def AdvTip2D(self, apex_pos, ThNow, PhiNow):
+    def advance_tip_2d(self, apex_pos, ThNow, PhiNow):
         """
         Functionality
         -------------
@@ -375,7 +375,7 @@ class SnapModel:
             theta = x[0]
             phi = x[1]
 
-            return self.getEnergyOfTip(apex_pos, theta, phi)
+            return self.get_energy_of_tip(apex_pos, theta, phi)
 
         x0 = np.array([ThNow, PhiNow])
         limits = [(ThNow - 2.0, ThNow + 2.0), (PhiNow - 2.0, PhiNow + 2.0)]
@@ -389,8 +389,8 @@ class SnapModel:
 
         return func(res.x), res.x[0], res.x[1]
 
-    def getEnergyOfTip(self, apex_pos, theta, phi):
-        CO_pos = self.getCOPos(apex_pos, theta, phi)
+    def get_energy_of_tip(self, apex_pos, theta, phi):
+        CO_pos = self.get_co_pos(apex_pos, theta, phi)
 
         # Energy at a given position is the sum of all atomic contributions
         UH_PES = self.energy_model.getEnergy(CO_pos)
